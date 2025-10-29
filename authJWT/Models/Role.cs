@@ -8,5 +8,7 @@ namespace authJWT.Models
         public int IdRole { get; set; }
 
         public string NameRole { get; set; }
+
+
     }
 }

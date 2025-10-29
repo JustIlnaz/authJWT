@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace authJWT.Models
@@ -7,8 +8,8 @@ namespace authJWT.Models
     {
         [Key]
         public int IdUser { get; set; }
-
         public string? Email {  get; set; }
+      
         public string? FullName { get; set; }
         public string? Phone { get; set; }
 
@@ -21,5 +22,8 @@ namespace authJWT.Models
 
         public int RoleId { get; set; }
         public Role Roles { get; set; }
+
+
     }
+
 }

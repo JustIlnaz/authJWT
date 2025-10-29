@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace authJWT.Models
 {
@@ -10,10 +11,13 @@ namespace authJWT.Models
         public string DescriptionItem { get; set; }
         public double PriceItem { get; set; }
         public int StockItem { get; set; }
+        public bool IsActive { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-
-        
-
+        [Required]
+        [ForeignKey("CategoryId")]
+        public int CategoryId {  get; set; }
+        public Category Categories { get; set; }
 
 
     }
