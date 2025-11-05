@@ -8,17 +8,24 @@ namespace authJWT.Models
         [Key]
         public int IdItem { get; set; }
         public string NameItem { get; set; }
-        public string DescriptionItem { get; set; }
-        public double PriceItem { get; set; }
-        public int StockItem { get; set; }
-        public bool IsActive { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public string? Description { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Price { get; set; }
+
+        public int Stock { get; set; }
 
         [Required]
-        [ForeignKey("CategoryId")]
-        public int CategoryId {  get; set; }
-        public Category Categories { get; set; }
+        [ForeignKey("Category")]
+        public int CategoryId { get; set; }
+        public Category Category { get; set; }
 
+        public string? ImagePath { get; set; }
+        public bool IsActive { get; set; } = true;
+        public DateTime? CreatedDate { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdateDate { get; set; } = DateTime.UtcNow;
 
+        public ICollection<CartItem> CartItems { get; set; }
+        public ICollection<OrderItem> OrderItems { get; set; }
     }
 }

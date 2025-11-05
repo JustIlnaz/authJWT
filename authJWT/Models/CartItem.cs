@@ -3,15 +3,15 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace authJWT.Models
 {
-    public class OrderItem
+    public class CartItem
     {
         [Key]
-        public int IdOrderItem { get; set; }
+        public int IdCartItem { get; set; }
 
         [Required]
-        [ForeignKey("Order")]
-        public int OrderId { get; set; }
-        public Order Order { get; set; }
+        [ForeignKey("Cart")]
+        public int CartId { get; set; }
+        public Cart Cart { get; set; }
 
         [Required]
         [ForeignKey("Item")]
@@ -19,8 +19,6 @@ namespace authJWT.Models
         public Item Item { get; set; }
 
         public int Quantity { get; set; }
-
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal UnitPrice { get; set; }
+        public DateTime? AddedDate { get; set; } = DateTime.UtcNow;
     }
 }

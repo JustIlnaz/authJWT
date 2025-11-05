@@ -6,9 +6,7 @@ namespace authJWT.Models
     {
         [Key]
         public int IdRole { get; set; }
-
-        public string NameRole { get; set; }
-
-
+        public string NameRole { get; set; }  // "Admin", "Manager", "Customer"
+        public ICollection<User> Users { get; set; }
     }
 }

@@ -14,7 +14,7 @@ namespace authJWT.Models
 
         [Required]
         [ForeignKey("User")]
-       
+
         public int UserId {  get; set; }
         public User Users { get; set; }
 
