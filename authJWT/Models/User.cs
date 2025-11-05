@@ -7,23 +7,19 @@ namespace authJWT.Models
     public class User
     {
         [Key]
-        public int IdUser { get; set; }
-
-        public string? Email { get; set; }
-        public string? Password { get; set; }
-        public string? FullName { get; set; }
-        public string? Phone { get; set; }
-
-        public DateTime? CreatedDate { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdateDate { get; set; } = DateTime.UtcNow;
-
-        [Required]
+        public int Id { get; set; }
+        public string Email { get; set; }
+        public string Password { get; set; }
+        public string FullName { get; set; }
+        public string Phone { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        public string? AdressDelivery { get; set; }
         [ForeignKey("Role")]
         public int RoleId { get; set; }
-        public Role Roles { get; set; }
-
-        public ICollection<Order> Orders { get; set; }
-        public ICollection<Address> Addresses { get; set; }
-        public Cart Cart { get; set; }
+        public virtual Role Role { get; set; }
+        public virtual ICollection<PaymentMethod> PaymentMethods { get; set; } = new List<PaymentMethod>();
+        public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
+        public virtual ICollection<Session> Sessions { get; set; } = new List<Session>();
     }
 }

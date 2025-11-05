@@ -6,16 +6,16 @@ namespace authJWT.Models
     public class Cart
     {
         [Key]
-        public int IdCart { get; set; }
-
-        [Required]
+        public int Id { get; set; }
         [ForeignKey("User")]
         public int UserId { get; set; }
-        public User User { get; set; }
-
-        public DateTime? CreatedDate { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdateDate { get; set; } = DateTime.UtcNow;
-
-        public ICollection<CartItem> CartItems { get; set; }
+        [ForeignKey("Product")]
+        public int ProductId { get; set; }
+        public decimal CountProduct { get; set; }
+        [ForeignKey("Order")]
+        public int? OrderId { get; set; }
+        public virtual Order Order { get; set; }
+        public virtual User User { get; set; }
+        public virtual Item Items { get; set; }
     }
 }

@@ -3,11 +3,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace authJWT.Models
 {
-    public class Category
+    public class Session
     {
         [Key]
         public int Id { get; set; }
-        public string Name { get; set; }
-        public virtual ICollection<Item> Items { get; set; } = new List<Item>();
+        public string Token { get; set; }
+        [ForeignKey("User")]
+        public int UserId { get; set; }
+        public virtual User User { get; set; }
     }
 }

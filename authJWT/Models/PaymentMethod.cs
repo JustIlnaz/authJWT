@@ -6,17 +6,15 @@ namespace authJWT.Models
     public class PaymentMethod
     {
         [Key]
-        public int IdPaymentMethod { get; set; }
-
-        [Required]
+        public int Id { get; set; }
+        [StringLength(19, ErrorMessage = "Введен неверный формат")]
+        public int CardNumber { get; set; }
+        [StringLength(5, ErrorMessage = "Введен неверный формат")]
+        public string ExpiryDate { get; set; }
+        [StringLength(3, ErrorMessage = "Введен неверный формат")]
+        public int CodeCVC { get; set; }
         [ForeignKey("User")]
         public int UserId { get; set; }
-        public User User { get; set; }
-
-        public string Type { get; set; }  // "credit_card", "debit_card", "paypal"
-        public string? Provider { get; set; }
-        public string? AccountNumber { get; set; }
-        public DateTime? ExpiryDate { get; set; }
-        public bool IsDefault { get; set; } = false;
+        public virtual User User { get; set; }
     }
 }

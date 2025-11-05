@@ -2,11 +2,13 @@
 
 namespace authJWT.Models
 {
-    public class Status
+    public class ShippingMethod
     {
         [Key]
         public int Id { get; set; }
-        public string Name { get; set; } // "pending", "confirmed", "shipped", "delivered", "cancelled"
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public decimal Price { get; set; }
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
     }
 }
