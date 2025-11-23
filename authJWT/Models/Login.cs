@@ -8,9 +8,9 @@ namespace authJWT.Models
         [Key]
         public int IdLogin { get; set; }
 
-        public string LoginT { get; set; }
+        public string LoginT { get; set; }  = string.Empty;
 
-        public string Password { get; set; }
+        public string Password { get; set; } = string.Empty;
 
         [Required]
         [ForeignKey("User")]
