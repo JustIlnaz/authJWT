@@ -22,59 +22,70 @@ namespace authJWT.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> GetCategories()
+        public async Task<ActionResult> GetCategories([FromQuery] int? id)
         {
-            return await _service.GetCategories();
-        }
-
-        [HttpGet("{id}")]
-        public async Task<ActionResult> GetCategory(int id)
-        {
-            var category = await _context.Categories
-                .Include(c => c.Items.Where(i => i.IsActive))
-                .FirstOrDefaultAsync(c => c.Id == id);
-
-            if (category == null)
-                return NotFound(new { message = "Категория не найдена" });
-
-            return Ok(new
+            if (id.HasValue)
             {
-                category.Id,
-                category.Name,
-                Items = category.Items.Select(i => new
+                var category = await _context.Categories
+                    .Include(c => c.Items.Where(i => i.IsActive))
+                    .FirstOrDefaultAsync(c => c.Id == id.Value);
+
+                if (category == null)
+                    return NotFound(new { message = "Категория не найдена" });
+
+                return Ok(new
                 {
-                    i.Id,
-                    i.Name,
-                    i.Price,
-                    i.Count
-                })
-            });
+                    category.Id,
+                    category.Name,
+                    Items = category.Items.Select(i => new
+                    {
+                        i.Id,
+                        i.Name,
+                        i.Price,
+                        i.Count
+                    })
+                });
+            }
+
+            return await _service.GetCategories();
         }
 
         [HttpPost]
         [AuthorizeRole("Администратор")]
-        public async Task<ActionResult> CreateCategory([FromBody] string name)
+        public async Task<ActionResult> CreateCategory([FromQuery] string name)
         {
             return await _service.CreateCategory(name);
         }
 
-        [HttpPut("{id}")]
+        [HttpPut]
         [AuthorizeRole("Администратор")]
-        public async Task<IActionResult> UpdateCategory(int id, [FromBody] string name)
+        public async Task<IActionResult> UpdateCategory([FromQuery] int id, [FromQuery] string name)
         {
+            if (id <= 0)
+                return BadRequest(new { message = "Неверный ID категории" });
+
+            if (string.IsNullOrWhiteSpace(name))
+                return BadRequest(new { message = "Название категории не может быть пустым" });
+
+            if (name.Length > 100)
+                return BadRequest(new { message = "Название категории не может превышать 100 символов" });
+
             var category = await _context.Categories.FindAsync(id);
             if (category == null)
                 return NotFound(new { message = "Категория не найдена" });
 
+            if (await _context.Categories.AnyAsync(c => c.Name == name && c.Id != id))
+                return BadRequest(new { message = "Категория с таким названием уже существует" });
+
             category.Name = name;
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(new { message = "Успешно обновлено" });
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete]
         [AuthorizeRole("Администратор")]
-        public async Task<ActionResult> DeleteCategory(int id)
+        public async Task<ActionResult> DeleteCategory([FromQuery] int id)
         {
             return await _service.DeleteCategory(id);
         }

@@ -12,8 +12,8 @@ using authJWT.Connection;
 namespace authJWT.Migrations
 {
     [DbContext(typeof(ContextDb))]
-    [Migration("20251107092852_FuckedUp")]
-    partial class FuckedUp
+    [Migration("20251123161734_Migration for JwtApi")]
+    partial class MigrationforJwtApi
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -111,7 +111,7 @@ namespace authJWT.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("Item");
+                    b.ToTable("Items");
                 });
 
             modelBuilder.Entity("authJWT.Models.Login", b =>
@@ -262,7 +262,7 @@ namespace authJWT.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Session");
+                    b.ToTable("Session", (string)null);
                 });
 
             modelBuilder.Entity("authJWT.Models.ShippingMethod", b =>
@@ -286,7 +286,7 @@ namespace authJWT.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ShippingMethod");
+                    b.ToTable("ShippingMethods");
                 });
 
             modelBuilder.Entity("authJWT.Models.Status", b =>
@@ -303,7 +303,7 @@ namespace authJWT.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Status");
+                    b.ToTable("Statuses");
                 });
 
             modelBuilder.Entity("authJWT.Models.User", b =>

@@ -29,33 +29,32 @@ namespace authJWT.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> GetOrders()
+        public async Task<ActionResult> GetOrders([FromQuery] int? id)
         {
-            return await _service.GetOrders(GetUserId(), GetUserRole());
-        }
+            if (id.HasValue)
+            {
+                return await _service.GetOrder(id.Value, GetUserId(), GetUserRole());
+            }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult> GetOrder(int id)
-        {
-            return await _service.GetOrder(id, GetUserId(), GetUserRole());
+            return await _service.GetOrders(GetUserId(), GetUserRole());
         }
 
         [HttpPost]
         [AuthorizeRole("Покупатель")]
-        public async Task<ActionResult> CreateOrder([FromBody] CreateOrderRequest request)
+        public async Task<ActionResult> CreateOrder([FromQuery] CreateOrderRequest request)
         {
             return await _service.CreateOrder(GetUserId(), request.ShippingMethodId);
         }
 
-        [HttpPut("{id}/status")]
+        [HttpPut("status")]
         [AuthorizeRole("Администратор", "Менеджер")]
-        public async Task<ActionResult> UpdateOrderStatus(int id, [FromBody] string statusName)
+        public async Task<ActionResult> UpdateOrderStatus([FromQuery] int id, [FromQuery] string statusName)
         {
             return await _service.UpdateOrderStatus(id, statusName);
         }
 
-        [HttpDelete("{id}")]
-        public async Task<ActionResult> CancelOrder(int id)
+        [HttpDelete]
+        public async Task<ActionResult> CancelOrder([FromQuery] int id)
         {
             return await _service.CancelOrder(id, GetUserId(), GetUserRole());
         }

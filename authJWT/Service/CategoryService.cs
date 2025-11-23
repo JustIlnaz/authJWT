@@ -19,6 +19,9 @@ namespace authJWT.Service
             if (string.IsNullOrWhiteSpace(Name))
                 return new BadRequestObjectResult(new { message = "Название категории не может быть пустым" });
 
+            if (Name.Length > 100)
+                return new BadRequestObjectResult(new { message = "Название категории не может превышать 100 символов" });
+
             if (await _context.Categories.AnyAsync(c => c.Name == Name))
                 return new BadRequestObjectResult(new { message = "Категория с таким названием уже существует" });
 
@@ -26,7 +29,7 @@ namespace authJWT.Service
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
 
-            return new CreatedAtActionResult(nameof(CreateCategory), "Categories", new { id = category.Id }, category);
+            return new OkObjectResult(new { message = "Успешно создано", data = category });
         }
 
         public async Task<ActionResult> DeleteCategory(int Id)
@@ -44,7 +47,7 @@ namespace authJWT.Service
             _context.Categories.Remove(category);
             await _context.SaveChangesAsync();
 
-            return new NoContentResult();
+            return new OkObjectResult(new { message = "Успешно удалено" });
         }
 
         public async Task<ActionResult> GetCategories()

@@ -18,15 +18,24 @@ namespace authJWT.Controllers
             _context = context;
         }
 
-        // GET: api/Reports/sales - Отчёт по продажам
+        // отчет по продажам
         [HttpGet("sales")]
         public async Task<ActionResult> GetSalesReport(
             [FromQuery] DateTime? startDate,
             [FromQuery] DateTime? endDate,
             [FromQuery] string period = "daily") // daily, weekly
         {
+            if (startDate.HasValue && endDate.HasValue && startDate > endDate)
+                return BadRequest(new { message = "Дата начала не может быть больше даты окончания" });
+
+            if (period != "daily" && period != "weekly")
+                return BadRequest(new { message = "Период должен быть 'daily' или 'weekly'" });
+
             var start = startDate ?? DateTime.UtcNow.AddDays(-30);
             var end = endDate ?? DateTime.UtcNow;
+
+            if (start > end)
+                return BadRequest(new { message = "Дата начала не может быть больше даты окончания" });
 
             var orders = await _context.Orders
                 .Include(o => o.Carts)
@@ -53,15 +62,24 @@ namespace authJWT.Controllers
             return Ok(report);
         }
 
-        // GET: api/Reports/top-items - Топ-10 самых продаваемых товаров
+        // топ 10 самых продаваемых товаров
         [HttpGet("top-items")]
         public async Task<ActionResult> GetTopItems(
             [FromQuery] DateTime? startDate,
             [FromQuery] DateTime? endDate,
             [FromQuery] int top = 10)
         {
+            if (startDate.HasValue && endDate.HasValue && startDate > endDate)
+                return BadRequest(new { message = "Дата начала не может быть больше даты окончания" });
+
+            if (top <= 0 || top > 100)
+                return BadRequest(new { message = "Количество товаров должно быть от 1 до 100" });
+
             var start = startDate ?? DateTime.UtcNow.AddDays(-30);
             var end = endDate ?? DateTime.UtcNow;
+
+            if (start > end)
+                return BadRequest(new { message = "Дата начала не может быть больше даты окончания" });
 
             var topItems = await _context.OrderItems
                 .Include(oi => oi.Item)
@@ -85,14 +103,20 @@ namespace authJWT.Controllers
             return Ok(topItems);
         }
 
-        // GET: api/Reports/revenue - Общая выручка за период
+        // общая выручка за период
         [HttpGet("revenue")]
         public async Task<ActionResult> GetRevenue(
             [FromQuery] DateTime? startDate,
             [FromQuery] DateTime? endDate)
         {
+            if (startDate.HasValue && endDate.HasValue && startDate > endDate)
+                return BadRequest(new { message = "Дата начала не может быть больше даты окончания" });
+
             var start = startDate ?? DateTime.UtcNow.AddDays(-30);
             var end = endDate ?? DateTime.UtcNow;
+
+            if (start > end)
+                return BadRequest(new { message = "Дата начала не может быть больше даты окончания" });
 
             var orders = await _context.Orders
                 .Include(o => o.Carts)

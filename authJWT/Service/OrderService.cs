@@ -17,6 +17,9 @@ namespace authJWT.Service
 
         public async Task<ActionResult> GetOrders(int? userId, string? userRole)
         {
+            if (userId.HasValue && userId.Value <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID пользователя" });
+
             IQueryable<Order> query = _context.Orders
                 .Include(o => o.Status)
                 .Include(o => o.ShippingMethod)
@@ -49,6 +52,9 @@ namespace authJWT.Service
 
         public async Task<ActionResult> GetOrder(int id, int? userId, string? userRole)
         {
+            if (id <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID заказа" });
+
             var order = await _context.Orders
                 .Include(o => o.Status)
                 .Include(o => o.ShippingMethod)
@@ -61,7 +67,7 @@ namespace authJWT.Service
                 return new NotFoundObjectResult(new { message = "Заказ не найден" });
 
             if (userRole == "Покупатель" && userId.HasValue && !order.Carts.Any(c => c.UserId == userId.Value))
-                return new ForbidResult();
+                return new UnauthorizedObjectResult(new { message = "Недостаточно прав для выполнения этой операции" });
 
             return new OkObjectResult(new
             {
@@ -83,6 +89,16 @@ namespace authJWT.Service
 
         public async Task<ActionResult> CreateOrder(int userId, int shippingMethodId)
         {
+            if (userId <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID пользователя" });
+
+            if (shippingMethodId <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID способа доставки" });
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return new NotFoundObjectResult(new { message = "Пользователь не найден" });
+
             var cartItems = await _context.Carts
                 .Include(c => c.Items)
                 .Where(c => c.UserId == userId && c.OrderId == null)
@@ -136,11 +152,17 @@ namespace authJWT.Service
 
             await _context.SaveChangesAsync();
 
-            return new CreatedAtActionResult(nameof(GetOrder), "Orders", new { id = order.Id }, order);
+            return new OkObjectResult(new { message = "Успешно создано", data = order });
         }
 
         public async Task<ActionResult> UpdateOrderStatus(int id, string statusName)
         {
+            if (id <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID заказа" });
+
+            if (string.IsNullOrWhiteSpace(statusName))
+                return new BadRequestObjectResult(new { message = "Название статуса не может быть пустым" });
+
             var order = await _context.Orders.FindAsync(id);
             if (order == null)
                 return new NotFoundObjectResult(new { message = "Заказ не найден" });
@@ -149,14 +171,24 @@ namespace authJWT.Service
             if (status == null)
                 return new NotFoundObjectResult(new { message = "Статус не найден" });
 
+            if (statusName == "pending" && order.StatusId != 0)
+            {
+                var currentStatus = await _context.Statuses.FindAsync(order.StatusId);
+                if (currentStatus != null && currentStatus.Name != "pending" && currentStatus.Name != "cancelled")
+                    return new BadRequestObjectResult(new { message = "Нельзя вернуть заказ в статус 'pending' после обработки" });
+            }
+
             order.StatusId = status.Id;
             await _context.SaveChangesAsync();
 
-            return new NoContentResult();
+            return new OkObjectResult(new { message = "Успешно обновлено" });
         }
 
         public async Task<ActionResult> CancelOrder(int id, int? userId, string? userRole)
         {
+            if (id <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID заказа" });
+
             var order = await _context.Orders
                 .Include(o => o.Status)
                 .Include(o => o.Carts)
@@ -169,7 +201,7 @@ namespace authJWT.Service
             if (userRole == "Покупатель" && userId.HasValue)
             {
                 if (!order.Carts.Any(c => c.UserId == userId.Value))
-                    return new ForbidResult();
+                    return new UnauthorizedObjectResult(new { message = "Недостаточно прав для выполнения этой операции" });
 
                 if (order.Status.Name != "pending")
                     return new BadRequestObjectResult(new { message = "Можно отменить только заказ со статусом 'pending'" });
@@ -191,7 +223,7 @@ namespace authJWT.Service
             order.StatusId = cancelledStatus.Id;
             await _context.SaveChangesAsync();
 
-            return new NoContentResult();
+            return new OkObjectResult(new { message = "Успешно удалено" });
         }
     }
 }

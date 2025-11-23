@@ -31,19 +31,19 @@ namespace authJWT.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> AddToCart([FromBody] AddToCartRequest request)
+        public async Task<ActionResult> AddToCart([FromQuery] AddToCartRequest request)
         {
             return await _service.AddToCart(GetUserId(), request.ItemId, request.Quantity);
         }
 
-        [HttpPut("{id}")]
-        public async Task<ActionResult> UpdateCartItem(int id, [FromBody] decimal quantity)
+        [HttpPut]
+        public async Task<ActionResult> UpdateCartItem([FromQuery] int id, [FromQuery] decimal quantity)
         {
             return await _service.UpdateCartItem(GetUserId(), id, quantity);
         }
 
-        [HttpDelete("{id}")]
-        public async Task<ActionResult> RemoveFromCart(int id)
+        [HttpDelete]
+        public async Task<ActionResult> RemoveFromCart([FromQuery] int id)
         {
             return await _service.RemoveFromCart(GetUserId(), id);
         }

@@ -31,17 +31,41 @@ namespace authJWT.Controllers
             return User.FindFirst(ClaimTypes.Role)?.Value ?? "";
         }
 
-        // GET: api/Users - Просмотр пользователей (Админ, Менеджер)
         [HttpGet]
         [AuthorizeRole("Администратор", "Менеджер")]
-        public async Task<ActionResult> GetUsers([FromQuery] string? role)
+        public async Task<ActionResult> GetUsers([FromQuery] int? id, [FromQuery] string? role)
         {
+            if (id.HasValue)
+            {
+                var userRole = GetUserRole();
+                var user = await _context.Users
+                    .Include(u => u.Role)
+                    .FirstOrDefaultAsync(u => u.Id == id.Value);
+
+                if (user == null)
+                    return NotFound(new { message = "Пользователь не найден" });
+
+                if (userRole == "Менеджер" && user.Role.NameRole != "Покупатель")
+                    return Unauthorized(new { message = "Недостаточно прав для выполнения этой операции" });
+
+                return Ok(new
+                {
+                    user.Id,
+                    user.Email,
+                    user.FullName,
+                    user.Phone,
+                    user.AdressDelivery,
+                    user.CreatedAt,
+                    user.UpdatedAt,
+                    Role = user.Role.NameRole
+                });
+            }
+
             IQueryable<User> query = _context.Users.Include(u => u.Role);
 
-            var userRole = GetUserRole();
-            if (userRole == "Менеджер")
+            var currentUserRole = GetUserRole();
+            if (currentUserRole == "Менеджер")
             {
-                // Менеджер видит только покупателей
                 query = query.Where(u => u.Role.NameRole == "Покупатель");
             }
 
@@ -63,40 +87,31 @@ namespace authJWT.Controllers
             return Ok(users);
         }
 
-        // GET: api/Users/5
-        [HttpGet("{id}")]
-        [AuthorizeRole("Администратор", "Менеджер")]
-        public async Task<ActionResult> GetUser(int id)
-        {
-            var userRole = GetUserRole();
-            var user = await _context.Users
-                .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.Id == id);
-
-            if (user == null)
-                return NotFound(new { message = "Пользователь не найден" });
-
-            if (userRole == "Менеджер" && user.Role.NameRole != "Покупатель")
-                return Forbid();
-
-            return Ok(new
-            {
-                user.Id,
-                user.Email,
-                user.FullName,
-                user.Phone,
-                user.AdressDelivery,
-                user.CreatedAt,
-                user.UpdatedAt,
-                Role = user.Role.NameRole
-            });
-        }
-
-        // POST: api/Users/employees - Создание сотрудника (Админ)
         [HttpPost("employees")]
         [AuthorizeRole("Администратор")]
-        public async Task<ActionResult> CreateEmployee([FromBody] CreateEmployeeRequest request)
+        public async Task<ActionResult> CreateEmployee([FromQuery] CreateEmployeeRequest request)
         {
+            if (string.IsNullOrWhiteSpace(request.Email))
+                return BadRequest(new { message = "Email не может быть пустым" });
+
+            if (!System.Text.RegularExpressions.Regex.IsMatch(request.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                return BadRequest(new { message = "Неверный формат email" });
+
+            if (string.IsNullOrWhiteSpace(request.Password))
+                return BadRequest(new { message = "Пароль не может быть пустым" });
+
+            if (request.Password.Length < 6)
+                return BadRequest(new { message = "Пароль должен содержать минимум 6 символов" });
+
+            if (string.IsNullOrWhiteSpace(request.FullName))
+                return BadRequest(new { message = "ФИО не может быть пустым" });
+
+            if (string.IsNullOrWhiteSpace(request.Phone))
+                return BadRequest(new { message = "Телефон не может быть пустым" });
+
+            if (string.IsNullOrWhiteSpace(request.Role))
+                return BadRequest(new { message = "Роль не может быть пустой" });
+
             if (await _context.Users.AnyAsync(u => u.Email == request.Email))
                 return BadRequest(new { message = "Пользователь с таким email уже существует" });
 
@@ -118,28 +133,29 @@ namespace authJWT.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetUser), new { id = user.Id }, new
+            return Ok(new { message = "Успешно создано", data = new
             {
                 user.Id,
                 user.Email,
                 user.FullName,
                 Role = role.NameRole
-            });
+            }});
         }
 
-        // PUT: api/Users/{id}/role - Изменение роли пользователя (Админ)
-        [HttpPut("{id}/role")]
+        [HttpPut("role")]
         [AuthorizeRole("Администратор")]
-        public async Task<ActionResult> EditRole(int id, [FromBody] int roleId)
+        public async Task<ActionResult> EditRole([FromQuery] int id, [FromQuery] int roleId)
         {
             return await _userService.EditRole(id, roleId);
         }
 
-        // PUT: api/Users/5 - Обновление пользователя (Админ, Менеджер)
-        [HttpPut("{id}")]
+        [HttpPut]
         [AuthorizeRole("Администратор", "Менеджер")]
-        public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserRequest request)
+        public async Task<IActionResult> UpdateUser([FromQuery] int id, [FromQuery] UpdateUserRequest request)
         {
+            if (id <= 0)
+                return BadRequest(new { message = "Неверный ID пользователя" });
+
             var userRole = GetUserRole();
             var user = await _context.Users
                 .Include(u => u.Role)
@@ -149,10 +165,13 @@ namespace authJWT.Controllers
                 return NotFound(new { message = "Пользователь не найден" });
 
             if (userRole == "Менеджер" && user.Role.NameRole != "Покупатель")
-                return Forbid();
+                return Unauthorized(new { message = "Недостаточно прав для выполнения этой операции" });
 
             if (!string.IsNullOrEmpty(request.Email) && request.Email != user.Email)
             {
+                if (!System.Text.RegularExpressions.Regex.IsMatch(request.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                    return BadRequest(new { message = "Неверный формат email" });
+
                 if (await _context.Users.AnyAsync(u => u.Email == request.Email))
                     return BadRequest(new { message = "Пользователь с таким email уже существует" });
                 user.Email = request.Email;
@@ -177,41 +196,40 @@ namespace authJWT.Controllers
             user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(new { message = "Успешно обновлено" });
         }
 
-        // DELETE: api/Users/5 - Удаление пользователя (Админ)
-        [HttpDelete("{id}")]
+        [HttpDelete]
         [AuthorizeRole("Администратор")]
-        public async Task<IActionResult> DeleteUser(int id)
+        public async Task<IActionResult> DeleteUser([FromQuery] int id)
         {
+            if (id <= 0)
+                return BadRequest(new { message = "Неверный ID пользователя" });
+
             var user = await _context.Users.FindAsync(id);
             if (user == null)
                 return NotFound(new { message = "Пользователь не найден" });
 
+            // нельзя удалить пользователя у которого есть активные заказы
+            var hasActiveOrders = await _context.Orders
+                .Include(o => o.Carts)
+                .AnyAsync(o => o.Carts.Any(c => c.UserId == id) && o.Status.Name != "cancelled" && o.Status.Name != "delivered");
+
+            if (hasActiveOrders)
+                return BadRequest(new { message = "Невозможно удалить пользователя с активными заказами" });
+
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(new { message = "Успешно удалено" });
         }
     }
 
-    public class CreateEmployeeRequest
-    {
-        public string FullName { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-        public string Phone { get; set; } = string.Empty;
-        public string Role { get; set; } = "Менеджер";
-    }
+ 
 
-    public class UpdateUserRequest
-    {
-        public string? Email { get; set; }
-        public string? FullName { get; set; }
-        public string? Phone { get; set; }
-        public string? AdressDelivery { get; set; }
-        public string? Role { get; set; }
-    }
+   
 }
+
+
+
 

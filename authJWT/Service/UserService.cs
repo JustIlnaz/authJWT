@@ -16,6 +16,12 @@ namespace authJWT.Service
 
         public async Task<ActionResult> EditRole(int Id, int RoleId)
         {
+            if (Id <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID пользователя" });
+
+            if (RoleId <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID роли" });
+
             var user = await _context.Users.FindAsync(Id);
             if (user == null)
                 return new NotFoundObjectResult(new { message = "Пользователь не найден" });
@@ -24,11 +30,14 @@ namespace authJWT.Service
             if (role == null)
                 return new NotFoundObjectResult(new { message = "Роль не найдена" });
 
+            if (user.RoleId == RoleId)
+                return new BadRequestObjectResult(new { message = "Пользователь уже имеет эту роль" });
+
             user.RoleId = RoleId;
             user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            return new NoContentResult();
+            return new OkObjectResult(new { message = "Успешно обновлено" });
         }
     }
 }

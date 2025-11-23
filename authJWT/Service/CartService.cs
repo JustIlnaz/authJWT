@@ -17,6 +17,13 @@ namespace authJWT.Service
 
         public async Task<ActionResult> GetCart(int userId)
         {
+            if (userId <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID пользователя" });
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return new NotFoundObjectResult(new { message = "Пользователь не найден" });
+
             var cartItems = await _context.Carts
                 .Include(c => c.Items)
                 .ThenInclude(i => i.Category)
@@ -43,13 +50,25 @@ namespace authJWT.Service
 
         public async Task<ActionResult> AddToCart(int userId, int itemId, decimal quantity)
         {
-            var item = await _context.Items.FindAsync(itemId);
+            if (userId <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID пользователя" });
 
+            if (itemId <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID товара" });
+
+            if (quantity <= 0)
+                return new BadRequestObjectResult(new { message = "Количество должно быть больше нуля" });
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return new NotFoundObjectResult(new { message = "Пользователь не найден" });
+
+            var item = await _context.Items.FindAsync(itemId);
             if (item == null || !item.IsActive)
-                return new NotFoundObjectResult(new { message = "Товар не найден" });
+                return new NotFoundObjectResult(new { message = "Товар не найден или неактивен" });
 
             if (item.Count < quantity)
-                return new BadRequestObjectResult(new { message = "Недостаточно товара на складе" });
+                return new BadRequestObjectResult(new { message = $"Недостаточно товара на складе. Доступно: {item.Count}" });
 
             var existingCartItem = await _context.Carts
                 .FirstOrDefaultAsync(c => c.UserId == userId && c.ItemId == itemId && c.OrderId == null);
@@ -75,6 +94,15 @@ namespace authJWT.Service
 
         public async Task<ActionResult> UpdateCartItem(int userId, int id, decimal quantity)
         {
+            if (userId <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID пользователя" });
+
+            if (id <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID товара в корзине" });
+
+            if (quantity <= 0)
+                return new BadRequestObjectResult(new { message = "Количество должно быть больше нуля" });
+
             var cartItem = await _context.Carts
                 .Include(c => c.Items)
                 .FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId && c.OrderId == null);
@@ -83,16 +111,22 @@ namespace authJWT.Service
                 return new NotFoundObjectResult(new { message = "Товар в корзине не найден" });
 
             if (cartItem.Items.Count < quantity)
-                return new BadRequestObjectResult(new { message = "Недостаточно товара на складе" });
+                return new BadRequestObjectResult(new { message = $"Недостаточно товара на складе. Доступно: {cartItem.Items.Count}" });
 
             cartItem.CountItem = quantity;
             await _context.SaveChangesAsync();
 
-            return new NoContentResult();
+            return new OkObjectResult(new { message = "Успешно обновлено" });
         }
 
         public async Task<ActionResult> RemoveFromCart(int userId, int id)
         {
+            if (userId <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID пользователя" });
+
+            if (id <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID товара в корзине" });
+
             var cartItem = await _context.Carts
                 .FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId && c.OrderId == null);
 
@@ -102,7 +136,7 @@ namespace authJWT.Service
             _context.Carts.Remove(cartItem);
             await _context.SaveChangesAsync();
 
-            return new NoContentResult();
+            return new OkObjectResult(new { message = "Успешно удалено" });
         }
     }
 }

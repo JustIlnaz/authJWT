@@ -82,6 +82,21 @@ namespace authJWT.Service
 
         public async Task<ActionResult> CreateItem(CreateItem request)
         {
+            if (string.IsNullOrWhiteSpace(request.Name))
+                return new BadRequestObjectResult(new { message = "Название товара не может быть пустым" });
+
+            if (request.Name.Length > 200)
+                return new BadRequestObjectResult(new { message = "Название товара не может превышать 200 символов" });
+
+            if (request.Price < 0)
+                return new BadRequestObjectResult(new { message = "Цена не может быть отрицательной" });
+
+            if (request.Count < 0)
+                return new BadRequestObjectResult(new { message = "Количество не может быть отрицательным" });
+
+            if (string.IsNullOrWhiteSpace(request.Category))
+                return new BadRequestObjectResult(new { message = "Категория не может быть пустой" });
+
             var category = await _context.Categories.FirstOrDefaultAsync(c => c.Name == request.Category);
             if (category == null)
             {
@@ -93,7 +108,7 @@ namespace authJWT.Service
             var item = new Item
             {
                 Name = request.Name,
-                Description = request.Description,
+                Description = request.Description ?? string.Empty,
                 Price = request.Price,
                 Count = request.Count,
                 CategoryId = category.Id,
@@ -104,14 +119,29 @@ namespace authJWT.Service
             _context.Items.Add(item);
             await _context.SaveChangesAsync();
 
-            return new CreatedAtActionResult(nameof(GetItem), "Items", new { id = item.Id }, item);
+            return new OkObjectResult(new { message = "Успешно создано", data = item });
         }
 
         public async Task<ActionResult> UpdateItem(int id, CreateItem request)
         {
+            if (id <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID товара" });
+
             var item = await _context.Items.FindAsync(id);
             if (item == null)
                 return new NotFoundObjectResult(new { message = "Товар не найден" });
+
+            if (string.IsNullOrWhiteSpace(request.Name))
+                return new BadRequestObjectResult(new { message = "Название товара не может быть пустым" });
+
+            if (request.Price < 0)
+                return new BadRequestObjectResult(new { message = "Цена не может быть отрицательной" });
+
+            if (request.Count < 0)
+                return new BadRequestObjectResult(new { message = "Количество не может быть отрицательным" });
+
+            if (string.IsNullOrWhiteSpace(request.Category))
+                return new BadRequestObjectResult(new { message = "Категория не может быть пустой" });
 
             var category = await _context.Categories.FirstOrDefaultAsync(c => c.Name == request.Category);
             if (category == null)
@@ -129,11 +159,14 @@ namespace authJWT.Service
 
             await _context.SaveChangesAsync();
 
-            return new NoContentResult();
+            return new OkObjectResult(new { message = "Успешно обновлено" });
         }
 
         public async Task<ActionResult> DeleteItem(int id)
         {
+            if (id <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID товара" });
+
             var item = await _context.Items.FindAsync(id);
             if (item == null)
                 return new NotFoundObjectResult(new { message = "Товар не найден" });
@@ -141,7 +174,7 @@ namespace authJWT.Service
             item.IsActive = false;
             await _context.SaveChangesAsync();
 
-            return new NoContentResult();
+            return new OkObjectResult(new { message = "Успешно удалено" });
         }
     }
 }

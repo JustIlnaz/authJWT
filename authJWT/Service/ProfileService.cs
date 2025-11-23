@@ -21,6 +21,9 @@ namespace authJWT.Service
 
         public async Task<ActionResult> GetProfile(int userId)
         {
+            if (userId <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID пользователя" });
+
             var user = await _context.Users
                 .Include(u => u.Role)
                 .Include(u => u.PaymentMethods)
@@ -50,6 +53,9 @@ namespace authJWT.Service
 
         public async Task<ActionResult> UpdateProfile(int userId, UpdateProfileRequest request)
         {
+            if (userId <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID пользователя" });
+
             var user = await _context.Users.FindAsync(userId);
 
             if (user == null)
@@ -57,9 +63,18 @@ namespace authJWT.Service
 
             if (!string.IsNullOrEmpty(request.Email) && request.Email != user.Email)
             {
+                if (!System.Text.RegularExpressions.Regex.IsMatch(request.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                    return new BadRequestObjectResult(new { message = "Неверный формат email" });
+
                 if (await _context.Users.AnyAsync(u => u.Email == request.Email))
                     return new BadRequestObjectResult(new { message = "Пользователь с таким email уже существует" });
                 user.Email = request.Email;
+            }
+
+            if (!string.IsNullOrEmpty(request.Password))
+            {
+                if (request.Password.Length < 6)
+                    return new BadRequestObjectResult(new { message = "Пароль должен содержать минимум 6 символов" });
             }
 
             if (!string.IsNullOrEmpty(request.FullName))
@@ -79,11 +94,27 @@ namespace authJWT.Service
             user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            return new NoContentResult();
+            return new OkObjectResult(new { message = "Успешно обновлено" });
         }
 
         public async Task<ActionResult> AddPaymentMethod(int userId, AddPaymentMethodRequest request)
         {
+            if (userId <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID пользователя" });
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return new NotFoundObjectResult(new { message = "Пользователь не найден" });
+
+            if (request.CardNumber <= 0)
+                return new BadRequestObjectResult(new { message = "Номер карты не может быть пустым" });
+
+            if (string.IsNullOrWhiteSpace(request.ExpiryDate))
+                return new BadRequestObjectResult(new { message = "Срок действия карты не может быть пустым" });
+
+            if (request.CodeCVC <= 0 || request.CodeCVC > 999)
+                return new BadRequestObjectResult(new { message = "CVC код должен быть от 1 до 999" });
+
             var paymentMethod = new PaymentMethod
             {
                 CardNumber = request.CardNumber,
@@ -95,11 +126,17 @@ namespace authJWT.Service
             _context.PaymentMethods.Add(paymentMethod);
             await _context.SaveChangesAsync();
 
-            return new CreatedAtActionResult(nameof(GetProfile), "Profile", new { }, paymentMethod);
+            return new OkObjectResult(new { message = "Успешно создано", data = paymentMethod });
         }
 
         public async Task<ActionResult> DeletePaymentMethod(int userId, int id)
         {
+            if (userId <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID пользователя" });
+
+            if (id <= 0)
+                return new BadRequestObjectResult(new { message = "Неверный ID платёжного метода" });
+
             var paymentMethod = await _context.PaymentMethods
                 .FirstOrDefaultAsync(pm => pm.Id == id && pm.UserId == userId);
 
@@ -109,7 +146,7 @@ namespace authJWT.Service
             _context.PaymentMethods.Remove(paymentMethod);
             await _context.SaveChangesAsync();
 
-            return new NoContentResult();
+            return new OkObjectResult(new { message = "Успешно удалено" });
         }
     }
 }

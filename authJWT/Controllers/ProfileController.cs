@@ -30,21 +30,21 @@ namespace authJWT.Controllers
         }
 
         [HttpPut]
-        public async Task<ActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
+        public async Task<ActionResult> UpdateProfile([FromQuery] UpdateProfileRequest request)
         {
             return await _service.UpdateProfile(GetUserId(), request);
         }
 
         [HttpPost("payment-methods")]
         [AuthorizeRole("Покупатель")]
-        public async Task<ActionResult> AddPaymentMethod([FromBody] AddPaymentMethodRequest request)
+        public async Task<ActionResult> AddPaymentMethod([FromQuery] AddPaymentMethodRequest request)
         {
             return await _service.AddPaymentMethod(GetUserId(), request);
         }
 
-        [HttpDelete("payment-methods/{id}")]
+        [HttpDelete("payment-methods")]
         [AuthorizeRole("Покупатель")]
-        public async Task<ActionResult> DeletePaymentMethod(int id)
+        public async Task<ActionResult> DeletePaymentMethod([FromQuery] int id)
         {
             return await _service.DeletePaymentMethod(GetUserId(), id);
         }

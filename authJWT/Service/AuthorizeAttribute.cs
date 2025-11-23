@@ -43,7 +43,7 @@ namespace authJWT.Service
 
             if (userRole == null || !_allowedRoles.Contains(userRole))
             {
-                context.Result = new ForbidResult();
+                context.Result = new UnauthorizedObjectResult(new { message = "Недостаточно прав для выполнения этой операции" });
                 return;
             }
         }

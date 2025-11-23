@@ -108,7 +108,7 @@ namespace authJWT.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("Item");
+                    b.ToTable("Items");
                 });
 
             modelBuilder.Entity("authJWT.Models.Login", b =>
@@ -259,7 +259,7 @@ namespace authJWT.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Session");
+                    b.ToTable("Session", (string)null);
                 });
 
             modelBuilder.Entity("authJWT.Models.ShippingMethod", b =>
@@ -283,7 +283,7 @@ namespace authJWT.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ShippingMethod");
+                    b.ToTable("ShippingMethods");
                 });
 
             modelBuilder.Entity("authJWT.Models.Status", b =>
@@ -300,7 +300,7 @@ namespace authJWT.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Status");
+                    b.ToTable("Statuses");
                 });
 
             modelBuilder.Entity("authJWT.Models.User", b =>

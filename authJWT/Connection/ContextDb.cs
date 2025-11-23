@@ -30,6 +30,9 @@ namespace authJWT.Connection
                 .HasIndex(u => u.Email)
                 .IsUnique();
 
+            modelBuilder.Entity<Session>()
+                .ToTable("Session");
+
             base.OnModelCreating(modelBuilder);
         }
     }

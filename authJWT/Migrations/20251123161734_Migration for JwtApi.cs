@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace authJWT.Migrations
 {
     /// <inheritdoc />
-    public partial class FuckedUp : Migration
+    public partial class MigrationforJwtApi : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -38,7 +38,7 @@ namespace authJWT.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ShippingMethod",
+                name: "ShippingMethods",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -49,11 +49,11 @@ namespace authJWT.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ShippingMethod", x => x.Id);
+                    table.PrimaryKey("PK_ShippingMethods", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Status",
+                name: "Statuses",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -62,11 +62,11 @@ namespace authJWT.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Status", x => x.Id);
+                    table.PrimaryKey("PK_Statuses", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Item",
+                name: "Items",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -82,9 +82,9 @@ namespace authJWT.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Item", x => x.Id);
+                    table.PrimaryKey("PK_Items", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Item_Categories_CategoryId",
+                        name: "FK_Items_Categories_CategoryId",
                         column: x => x.CategoryId,
                         principalTable: "Categories",
                         principalColumn: "Id",
@@ -131,15 +131,15 @@ namespace authJWT.Migrations
                 {
                     table.PrimaryKey("PK_Orders", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Orders_ShippingMethod_ShippingMethodId",
+                        name: "FK_Orders_ShippingMethods_ShippingMethodId",
                         column: x => x.ShippingMethodId,
-                        principalTable: "ShippingMethod",
+                        principalTable: "ShippingMethods",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Orders_Status_StatusId",
+                        name: "FK_Orders_Statuses_StatusId",
                         column: x => x.StatusId,
-                        principalTable: "Status",
+                        principalTable: "Statuses",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -222,9 +222,9 @@ namespace authJWT.Migrations
                 {
                     table.PrimaryKey("PK_Carts", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Carts_Item_ItemId",
+                        name: "FK_Carts_Items_ItemId",
                         column: x => x.ItemId,
-                        principalTable: "Item",
+                        principalTable: "Items",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -255,9 +255,9 @@ namespace authJWT.Migrations
                 {
                     table.PrimaryKey("PK_OrderItems", x => x.IdOrderItem);
                     table.ForeignKey(
-                        name: "FK_OrderItems_Item_ItemId",
+                        name: "FK_OrderItems_Items_ItemId",
                         column: x => x.ItemId,
-                        principalTable: "Item",
+                        principalTable: "Items",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -284,8 +284,8 @@ namespace authJWT.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Item_CategoryId",
-                table: "Item",
+                name: "IX_Items_CategoryId",
+                table: "Items",
                 column: "CategoryId");
 
             migrationBuilder.CreateIndex(
@@ -354,7 +354,7 @@ namespace authJWT.Migrations
                 name: "Session");
 
             migrationBuilder.DropTable(
-                name: "Item");
+                name: "Items");
 
             migrationBuilder.DropTable(
                 name: "Orders");
@@ -366,10 +366,10 @@ namespace authJWT.Migrations
                 name: "Categories");
 
             migrationBuilder.DropTable(
-                name: "ShippingMethod");
+                name: "ShippingMethods");
 
             migrationBuilder.DropTable(
-                name: "Status");
+                name: "Statuses");
 
             migrationBuilder.DropTable(
                 name: "Roles");

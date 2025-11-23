@@ -26,6 +26,42 @@ namespace authJWT.Controllers
         [HttpPost("register")]
         public async Task<ActionResult> Register([FromQuery] CreateCustomer request)
         {
+            if (string.IsNullOrWhiteSpace(request.Email))
+                return BadRequest(new { message = "Email не может быть пустым" });
+
+            if (!System.Text.RegularExpressions.Regex.IsMatch(request.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                return BadRequest(new { message = "Неверный формат email" });
+
+            if (string.IsNullOrWhiteSpace(request.Password))
+                return BadRequest(new { message = "Пароль не может быть пустым" });
+
+            if (request.Password.Length < 6)
+                return BadRequest(new { message = "Пароль должен содержать минимум 6 символов" });
+
+            if (string.IsNullOrWhiteSpace(request.FullName))
+                return BadRequest(new { message = "ФИО не может быть пустым" });
+
+            if (string.IsNullOrWhiteSpace(request.Phone))
+                return BadRequest(new { message = "Телефон не может быть пустым" });
+
+            if (string.IsNullOrWhiteSpace(request.Login_T))
+                return BadRequest(new { message = "Логин не может быть пустым" });
+
+            if (request.Login_T.Length < 3)
+                return BadRequest(new { message = "Логин должен содержать минимум 3 символа" });
+
+            if (string.IsNullOrWhiteSpace(request.AdressDelivery))
+                return BadRequest(new { message = "Адрес доставки не может быть пустым" });
+
+            if (request.CardNumber <= 0)
+                return BadRequest(new { message = "Номер карты не может быть пустым" });
+
+            if (string.IsNullOrWhiteSpace(request.ExpiryDate))
+                return BadRequest(new { message = "Срок действия карты не может быть пустым" });
+
+            if (request.CodeCVC <= 0 || request.CodeCVC > 999)
+                return BadRequest(new { message = "CVC код должен быть от 1 до 999" });
+
             if (await _context.Users.AnyAsync(u => u.Email == request.Email))
             {
                 return BadRequest(new { message = "Пользователь с таким email уже существует" });
@@ -36,13 +72,19 @@ namespace authJWT.Controllers
                 return BadRequest(new { message = "Пользователь с таким логином уже существует" });
             }
 
+            var role = await _context.Roles.FirstOrDefaultAsync(r => r.NameRole == "Покупатель");
+            if (role == null)
+            {
+                return BadRequest(new { message = "Роль 'Покупатель' не найдена в системе" });
+            }
+
             var user = new User
             {
                 Email = request.Email,
                 FullName = request.FullName,
                 Phone = request.Phone,
                 AdressDelivery = request.AdressDelivery,
-                RoleId = 3, // Покупатель
+                RoleId = role.IdRole,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -75,20 +117,26 @@ namespace authJWT.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult> Login([FromBody] AuthorizeUser request)
+        public async Task<ActionResult> Login([FromQuery] string login, [FromQuery] string password)
         {
-            var login = await _context.Logins
+            if (string.IsNullOrWhiteSpace(login))
+                return BadRequest(new { message = "Логин не может быть пустым" });
+
+            if (string.IsNullOrWhiteSpace(password))
+                return BadRequest(new { message = "Пароль не может быть пустым" });
+
+            var loginRecord = await _context.Logins
                 .Include(l => l.Users)
                 .ThenInclude(u => u.Role)
-                .FirstOrDefaultAsync(l => l.LoginT == request.Login);
+                .FirstOrDefaultAsync(l => l.LoginT == login);
 
-            if (login == null || login.Users == null)
+            if (loginRecord == null || loginRecord.Users == null)
             {
                 return BadRequest(new { message = "Пользователь с таким логином не найден" });
             }
 
-            var user = login.Users;
-            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
+            var user = loginRecord.Users;
+            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
 
             if (result == PasswordVerificationResult.Failed)
             {

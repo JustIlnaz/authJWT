@@ -20,6 +20,7 @@ namespace authJWT.Controllers
 
         [HttpGet]
         public async Task<ActionResult> GetItems(
+            [FromQuery] int? id,
             [FromQuery] int? categoryId,
             [FromQuery] decimal? minPrice,
             [FromQuery] decimal? maxPrice,
@@ -27,32 +28,31 @@ namespace authJWT.Controllers
             [FromQuery] string? sortBy = "name",
             [FromQuery] string? sortOrder = "asc")
         {
+            if (id.HasValue)
+            {
+                return await _service.GetItem(id.Value);
+            }
+            
             return await _service.GetItems(categoryId, minPrice, maxPrice, inStock, sortBy, sortOrder);
-        }
-
-        [HttpGet("{id}")]
-        public async Task<ActionResult> GetItem(int id)
-        {
-            return await _service.GetItem(id);
         }
 
         [HttpPost]
         [AuthorizeRole("Администратор", "Менеджер")]
-        public async Task<ActionResult> CreateItem([FromBody] CreateItem request)
+        public async Task<ActionResult> CreateItem([FromQuery] CreateItem request)
         {
             return await _service.CreateItem(request);
         }
 
-        [HttpPut("{id}")]
+        [HttpPut]
         [AuthorizeRole("Администратор", "Менеджер")]
-        public async Task<ActionResult> UpdateItem(int id, [FromBody] CreateItem request)
+        public async Task<ActionResult> UpdateItem([FromQuery] int id, [FromQuery] CreateItem request)
         {
             return await _service.UpdateItem(id, request);
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete]
         [AuthorizeRole("Администратор", "Менеджер")]
-        public async Task<ActionResult> DeleteItem(int id)
+        public async Task<ActionResult> DeleteItem([FromQuery] int id)
         {
             return await _service.DeleteItem(id);
         }
